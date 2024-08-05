@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo and Color Scheme Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .logo, .favicon {
+            max-width: 100px;
+            margin: 10px;
+        }
+        .color-block {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            border: 1px solid #000;
+        }
+        .loading-spinner {
+            border: 8px solid #ffffff;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        .loading-text {
+            text-align: center;
+            font-size: 16px;
+            display: none;
+            margin-top: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #output {
+            display: none;
+        }
+        .output-container {
+            display: -webkit-box;
+            margin-left: 35%;
+        }
+        .attribution {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            top: 95%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Logo & Color Scheme Extractor</h1>
+        <form id="scrapeForm">
+            <label for="website_link">Website Link:</label>
+            <input type="text" id="website_link" name="website_link" required>
+            <button type="submit">Extract</button>
+        </form>
+        <br />
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        <div class="loading-text" id="loadingText">Please Wait, this may take a while depending on the target website...</div>
+    </div>
+    <div class="output-container">
+        <div id="output">
+            <h2>Logos:</h2>
+            <div id="logoOutput"></div>
+            <h2>Button Colors:</h2>
+            <div id="colorOutput"></div>
+            <h2>Dominant Text Color:</h2>
+            <div id="textColorOutput"></div>
+        </div>
+    </div>
+    <a class="attribution" href="https://clearbit.com">Logos provided by Clearbit</a>
+
+    <script>
+        document.getElementById('scrapeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingText = document.getElementById('loadingText');
+            const output = document.getElementById('output');
+            const logoOutput = document.getElementById('logoOutput');
+            const colorOutput = document.getElementById('colorOutput');
+            const textColorOutput = document.getElementById('textColorOutput');
+
+            
+            logoOutput.innerHTML = '';
+            colorOutput.innerHTML = '';
+            textColorOutput.innerHTML = '';
+            output.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+            loadingText.style.display = 'block';
+
+            fetch('/scrape', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingSpinner.style.display = 'none';
+                loadingText.style.display = 'none';
+                output.style.display = 'block';
+
+                if (data.logo_url) {
+                    logoOutput.innerHTML += `<img src="${data.logo_url}" alt="Logo" class="logo">`;
+                }
+
+                if (data.favicon_url) {
+                    logoOutput.innerHTML += `<img src="${data.favicon_url}" alt="Favicon" class="favicon">`;
+                }
+
+                if (data.background_colors) {
+                    data.background_colors.forEach(color => {
+                        colorOutput.innerHTML += `<div class="color-block" style="background-color: ${color};"></div>`;
+                    });
+                }
+
+                if (data.dominant_text_color) {
+                    textColorOutput.innerHTML = `<div class="color-block" style="background-color: ${data.dominant_text_color};"></div>`;
+                }
+            })
+            .catch(error => {
+                loadingSpinner.style.display = 'none';
+                loadingText.style.display = 'none';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
