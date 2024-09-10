@@ -3,6 +3,8 @@ import logging
 import requests
 import pandas as pd
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By as BY
@@ -16,12 +18,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 color_schemes = []
 
-def initialize_driver(path, website_link):
+def initialize_driver(website_link):
     options = Options()
     options.add_argument('--headless=new')
     options.add_argument('--window-size=1920,1080')
-    service = Service(executable_path=path)
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     driver.maximize_window()
     driver.get(website_link)
     return driver
@@ -115,8 +116,7 @@ def index():
 @app.route('/scrape', methods=['POST'])
 def scrape():
     website_link = request.form.get('website_link')
-    path = '/Users/SanshrayNandala/Downloads/chromedriver-win64/chromedriver-win64/chromedriver.exe'
-    driver = initialize_driver(path, website_link)
+    driver = initialize_driver(website_link)
 
     domain = get_domain(website_link)
     logo_url = get_logoURL_from_website(domain)
